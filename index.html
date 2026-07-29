@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chambering Decoded</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy: #0F1E33;
+    --navy-deep: #081221;
+    --parchment: #FAF7F0;
+    --parchment-dim: #F1EDE2;
+    --gold: #B08D4F;
+    --gold-light: #D9C393;
+    --oxblood: #6B2233;
+    --charcoal: #2A2A28;
+    --hairline: #D8D2C4;
+    --hairline-dark: rgba(250, 247, 240, 0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--parchment);
+    color: var(--charcoal);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation: none !important; transition: none !important; }
+  }
+
+  h1, h2, h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--navy);
+  }
+
+  .mono {
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  section { padding: 72px 0; }
+
+  .hairline-top { border-top: 1px solid var(--hairline); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    background: var(--navy);
+    background-image: radial-gradient(circle at 15% 20%, rgba(176,141,79,0.10), transparent 45%);
+    color: var(--parchment);
+    padding: 40px 0 64px;
+  }
+
+  .file-tag {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    border-bottom: 1px solid var(--hairline-dark);
+    padding-bottom: 18px;
+    margin-bottom: 40px;
+  }
+
+  .seat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(250,247,240,0.06);
+    border: 1px solid var(--hairline-dark);
+    padding: 6px 12px;
+    border-radius: 3px;
+  }
+
+  .seat-chip .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold-light);
+  }
+
+  .seat-chip.low .dot { background: #E8A5AE; }
+  .seat-chip.low { border-color: rgba(232,165,174,0.4); color: #F3C7CC; }
+
+  .hero h1 {
+    font-size: clamp(30px, 5vw, 46px);
+    color: var(--parchment);
+    line-height: 1.16;
+    max-width: 15ch;
+  }
+
+  .hero .eyebrow {
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    margin-bottom: 18px;
+    letter-spacing: 0.06em;
+  }
+
+  .hero p.sub {
+    font-size: 17px;
+    color: rgba(250,247,240,0.82);
+    max-width: 56ch;
+    margin: 22px 0 34px;
+  }
+
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--gold);
+    color: var(--navy-deep);
+    font-weight: 600;
+    font-size: 15px;
+    padding: 14px 26px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .cta:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .cta:focus-visible { outline: 2px solid var(--parchment); outline-offset: 3px; }
+  .cta.full { opacity: 0.5; cursor: not-allowed; }
+
+  .cta-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .cta-note { font-size: 13px; color: rgba(250,247,240,0.6); }
+
+  .progress-track {
+    width: 100%;
+    max-width: 320px;
+    height: 4px;
+    background: rgba(250,247,240,0.14);
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.4s ease;
+  }
+  .progress-fill.low { background: #E8A5AE; }
+
+  /* ---------- EXHIBIT SECTIONS ---------- */
+  .exhibit-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--hairline);
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 18px;
+  }
+
+  h2 { font-size: clamp(24px, 3.4vw, 30px); margin-bottom: 20px; }
+
+  .lede { font-size: 16px; color: #4A4A46; max-width: 62ch; margin-bottom: 30px; }
+
+  mark {
+    background: linear-gradient(to bottom, transparent 60%, var(--gold-light) 60%);
+    color: var(--navy);
+    font-weight: 600;
+    padding: 0 1px;
+  }
+
+  ul.plain { list-style: none; }
+  ul.plain li {
+    padding: 16px 0;
+    border-top: 1px solid var(--hairline);
+    font-size: 16px;
+    display: flex;
+    gap: 14px;
+  }
+  ul.plain li:last-child { border-bottom: 1px solid var(--hairline); }
+  ul.plain li .num { font-family: 'IBM Plex Mono', monospace; color: var(--gold); font-size: 13px; padding-top: 3px; flex-shrink: 0; }
+
+  /* before/after */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  @media (max-width: 620px) { .split { grid-template-columns: 1fr; } }
+  .split > div { padding: 26px 24px; }
+  .split .without { background: var(--parchment-dim); }
+  .split .with { background: var(--navy); color: var(--parchment); }
+  .split h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 14px; }
+  .split .without h3 { color: #8A6A5A; }
+  .split .with h3 { color: var(--gold-light); }
+  .split p { font-size: 15px; }
+  .split .with p { color: rgba(250,247,240,0.85); }
+
+  /* teacher */
+  .teacher {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 560px) { .teacher { grid-template-columns: 1fr; } }
+  .teacher .frame {
+    width: 140px; height: 140px;
+    background: var(--parchment-dim);
+    border: 1px solid var(--hairline);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; color: #9A9284; text-align: center;
+  }
+
+  /* curriculum grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
+  @media (max-width: 620px) { .grid-2 { grid-template-columns: 1fr; } }
+  .grid-2 > div { background: var(--parchment); padding: 24px; }
+  .grid-2 h3 { font-size: 16px; margin-bottom: 8px; }
+  .grid-2 p { font-size: 14.5px; color: #4A4A46; }
+
+  /* signature exercise */
+  .signature {
+    background: var(--navy);
+    color: var(--parchment);
+    border-radius: 4px;
+    padding: 44px 36px;
+  }
+  .signature .exhibit-label { color: var(--gold-light); border-color: var(--hairline-dark); }
+  .signature h2 { color: var(--parchment); }
+  .signature p { color: rgba(250,247,240,0.82); font-size: 16px; max-width: 60ch; }
+  .signature mark { background: linear-gradient(to bottom, transparent 60%, rgba(176,141,79,0.55) 60%); color: var(--parchment); }
+
+  /* offer */
+  .offer-box {
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    padding: 32px;
+    background: var(--parchment-dim);
+  }
+  .price-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 6px 0 2px; }
+  .offer-box .price { font-family: 'Fraunces', serif; font-size: 40px; color: var(--navy); }
+  .price-was { font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #9A9284; text-decoration: line-through; }
+  .price-tier-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    background: var(--oxblood);
+    color: var(--parchment);
+    padding: 4px 9px;
+    border-radius: 2px;
+    letter-spacing: 0.04em;
+  }
+  .price-tier-badge.regular { background: var(--gold); color: var(--navy-deep); }
+  .offer-box .price-note { font-size: 13px; color: #7A7468; margin: 6px 0 24px; }
+  .price-next-tier { font-size: 12.5px; color: #8A6A5A; margin-bottom: 20px; }
+
+  /* admin panel */
+  #adminPanel {
+    position: fixed; bottom: 16px; right: 16px;
+    background: var(--navy-deep); color: var(--parchment);
+    border: 1px solid var(--hairline-dark);
+    border-radius: 6px; padding: 14px 16px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+    z-index: 999; display: none; width: 220px;
+  }
+  #adminPanel.visible { display: block; }
+  #adminPanel .row { display: flex; gap: 6px; margin-top: 10px; }
+  #adminPanel input { width: 60px; padding: 6px; border-radius: 3px; border: 1px solid var(--hairline-dark); background: rgba(250,247,240,0.08); color: var(--parchment); font-family: inherit; }
+  #adminPanel button { padding: 6px 10px; border: 1px solid var(--gold); background: transparent; color: var(--gold-light); border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 12px; }
+  #adminPanel button:hover { background: var(--gold); color: var(--navy-deep); }
+  #adminPanel .label { color: var(--gold-light); text-transform: uppercase; font-size: 10.5px; }
+
+  .field {
+    display: block;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--hairline);
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    background: var(--parchment);
+    color: var(--charcoal);
+    margin-bottom: 12px;
+  }
+  .field:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+  .status-msg { font-size: 13.5px; margin-top: 10px; }
+  .status-msg.ok { color: #3E6B4F; }
+  .status-msg.err { color: var(--oxblood); }
+
+  /* faq */
+  details {
+    border-top: 1px solid var(--hairline);
+    padding: 16px 0;
+  }
+  details:last-child { border-bottom: 1px solid var(--hairline); }
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--navy);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15.5px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; font-family: 'IBM Plex Mono', monospace; color: var(--gold); font-size: 18px; }
+  details[open] summary::after { content: '\2212'; }
+  details p { margin-top: 10px; font-size: 14.5px; color: #4A4A46; }
+
+  footer {
+    background: var(--navy-deep);
+    color: rgba(250,247,240,0.5);
+    padding: 32px 0;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .final-cta { text-align: center; padding: 64px 0 80px; }
+  .final-cta h2 { margin-bottom: 10px; }
+  .final-cta .lede { margin-left: auto; margin-right: auto; }
+  .ps { max-width: 60ch; margin: 30px auto 0; font-size: 14px; color: #7A7468; border-top: 1px solid var(--hairline); padding-top: 20px; }
+
+  /* accessibility improvements */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="file-tag mono">
+      <span>CHAMBERING DECODED &mdash; FILE NO. 2026/08</span>
+      <span class="seat-chip" id="heroChip" aria-live="polite">
+        <span class="dot"></span>
+        <span id="heroChipText">Loading seats&hellip;</span>
+      </span>
+    </div>
+
+    <div class="eyebrow">For pupils about to start chambering and junior lawyers</div>
+    <h1>Most Pupils Don't Get Let Go For Bad Law. They Get Let Go For Not Knowing How Chambers Actually Works.</h1>
+    <p class="sub">Two Saturdays with Mr Hanipa Maidin, a 25-year litigator and former Deputy Minister overseeing legal affairs, built entirely around what law school skipped: the forms, the files, and the courtroom itself.</p>
+
+    <div class="cta-row">
+      <a href="#reserve" class="cta" id="heroCta">Reserve My Seat</a>
+      <span class="cta-note">8 &amp; 15 August 2026 &middot; No recording, no replay</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="heroProgress" style="width:0%"></div></div>
+  </div>
+</div>
+
+<section class="hairline-top">
+  <div class="wrap">
+    <span class="exhibit-label mono">Exhibit A &mdash; The Problem</span>
+    <h2>Here's what nobody warns you about.</h2>
+    <p class="lede">None of this shows up on a transcript. All of it shows up in your first month.</p>
+    <ul class="plain">
+      <li><span class="num">01</span><span>You'll be handed <mark>forms you've never seen</mark> and expected to know which one to file.</span></li>
+      <li><span class="num">02</span><span>You'll be expected to <mark>own a file</mark> from day one, with no orientation.</span></li>
+      <li><span class="num">03</span><span>Miss the <mark>KL Bar registration window</mark> and you're already behind everyone else in your batch.</span></li>
+      <li><span class="num">04</span><span>The first time a judge asks something <mark>off script</mark>, you're on your own.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="hairline-top">
+  <div class="wrap">
+    <span class="exhibit-label mono">Exhibit B &mdash; Why It Matters</span>
+    <h2>The gap that actually decides if you're kept on.</h2>
+    <div class="split">
+      <div class="without">
+        <h3>Without this</h3>
+        <p>You learn by getting corrected in front of your master. You miss a deadline nobody explained. You guess your way through your first case management and hope it goes fine.</p>
+      </div>
+      <div class="with">
+        <h3>With this</h3>
+        <p>You walk in already knowing the forms, the file discipline, and how to hold your own when a judge asks you something you didn't prepare for.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hairline-top">
+  <div class="wrap">
+    <span class="exhibit-label mono">Exhibit C &mdash; Your Teacher</span>
+    <div class="teacher">
+      <div class="frame">PORTRAIT<br>PLACEHOLDER</div>
+      <div>
+        <h2 style="margin-bottom:14px;">Mr Hanipa Maidin</h2>
+        <p style="font-size:16px; color:#4A4A46;">A barrister with <mark>25 years</mark> in litigation practice. He served as <mark>Deputy Minister</mark> in the Prime Minister's Department overseeing legal affairs, and lectures at AIKOL, IIUM. This workshop is built from what he has actually seen go wrong in his own chambers, not a generic syllabus.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hairline-top">
+  <div class="wrap">
+    <span class="exhibit-label mono">Exhibit D &mdash; What You'll Learn</span>
+    <h2>Four gaps, closed in two Saturdays.</h2>
+    <div style="margin-top:6px;">
+      <div class="grid-2">
+        <div>
+          <h3>Chambering administration</h3>
+          <p>Forms, KL Bar registration, legal aid enrollment, the chambering diary, and the portals every pupil is expected to already know.</p>
+        </div>
+        <div>
+          <h3>Drafting under pressure</h3>
+          <p>How to structure a Statement of Claim, the shortcuts senior litigators use, and the errors that get filings rejected.</p>
+        </div>
+        <div>
+          <h3>Owning a file like a senior</h3>
+          <p>How to build a mental map of a case, handle a file inherited mid-stream, and prep for a hearing on 24 hours' notice.</p>
+        </div>
+        <div>
+          <h3>Courtroom decorum</h3>
+          <p>How to address the court, proper attire, and the unwritten rules of firm culture nobody hands you on day one.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hairline-top">
+  <div class="wrap">
+    <span class="exhibit-label mono">Exhibit E &mdash; The Signature Exercise</span>
+    <div class="signature">
+      <h2>Mock Case Management, with Mr Hanipa as judge.</h2>
+      <p>He takes the judge's seat. Two volunteers stand with a real cause paper and are questioned live, the way an actual case management session runs. Every attempt gets <mark>direct feedback in front of the room</mark>. This is the closest you'll get to a courtroom before you're standing in one.</p>
+    </div>
+  </div>
+</section>
+
+<section class="hairline-top" id="reserve">
+  <div class="wrap">
+    <span class="exhibit-label mono">Why Now</span>
+    <h2>This cohort runs once.</h2>
+    <ul class="plain" style="margin-bottom:36px;">
+      <li><span class="num">&mdash;</span><span>Dates are fixed: <mark>8 and 15 August 2026</mark>. There's no makeup batch scheduled after.</span></li>
+      <li><span class="num">&mdash;</span><span>Seats are capped at <mark>20</mark> so the mock case management stays personal, not a lecture hall exercise.</span></li>
+      <li><span class="num">&mdash;</span><span>It's a live room, not a recording. What you get is what happens in it.</span></li>
+    </ul>
+
+    <div class="offer-box">
+      <div class="mono" style="font-size:12px; text-transform:uppercase; color:#9A9284;">Everything included</div>
+      <ul class="plain" style="margin:14px 0 24px;">
+        <li style="border-top:none; padding-top:0;"><span class="num">&mdash;</span><span>Two live sessions with Mr Hanipa Maidin</span></li>
+        <li><span class="num">&mdash;</span><span>The Mock Case Management exercise, judged and critiqued in person</span></li>
+        <li><span class="num">&mdash;</span><span>A certificate of completion</span></li>
+        <li><span class="num">&mdash;</span><span>Lifetime access to the private Chambering Decoded WhatsApp group</span></li>
+        <li style="border-bottom:none;"><span class="num">&mdash;</span><span>A free copy of "5 Things I Wish I Knew Before Chambering"</span></li>
+      </ul>
+
+      <div class="price-row">
+        <span class="price-was">RM200</span>
+        <span class="price" id="priceText">RM97</span>
+        <span class="price-tier-badge" id="priceTierBadge">Early Bird</span>
+      </div>
+      <div class="price-note">Per seat &middot; both sessions</div>
+      <div class="price-next-tier" id="priceNextTier"></div>
+
+      <label for="nameField" class="sr-only">Full name</label>
+      <input type="text" class="field" id="nameField" placeholder="Full name" aria-required="true">
+
+      <label for="phoneField" class="sr-only">WhatsApp number</label>
+      <input type="tel" class="field" id="phoneField" placeholder="WhatsApp number (e.g. 012xxxxxxx)" aria-required="true">
+
+      <div class="cta-row" style="justify-content:space-between;">
+        <button type="button" class="cta" id="reserveBtn">Reserve My Seat</button>
+        <span class="mono" id="offerSeatText" style="font-size:12px; color:#7A7468;">Loading&hellip;</span>
+      </div>
+      <div class="progress-track" style="max-width:100%;"><div class="progress-fill" id="offerProgress" style="width:0%"></div></div>
+      <div class="status-msg" id="statusMsg" role="alert" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<section class="hairline-top">
+  <div class="wrap">
+    <span class="exhibit-label mono">FAQ</span>
+    <h2 style="margin-bottom:6px;">Before you ask</h2>
+    <div style="margin-top:20px;">
+      <details>
+        <summary>Is this only for pupils already in chambers?</summary>
+        <p>No. It's built for pupils about to start chambering as well as junior lawyers already in practice.</p>
+      </details>
+      <details>
+        <summary>Will this guarantee I get chambers?</summary>
+        <p>No program can guarantee that. What this does is prepare you to perform once you're in.</p>
+      </details>
+      <details>
+        <summary>I've already done a mooting or advocacy course. Is this different?</summary>
+        <p>Yes. This covers the administration, file management, and courtroom conduct those courses don't touch.</p>
+      </details>
+      <details>
+        <summary>Do I need to attend both sessions?</summary>
+        <p>Yes, both sessions are required as they build on each other.</p>
+      </details>
+      <details>
+        <summary>What's the refund policy?</summary>
+        <p>Full refund if you cancel at least 7 days before the first session. No refunds after that date.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<div class="final-cta hairline-top">
+  <div class="wrap">
+    <h2>Know exactly what to do before you walk in.</h2>
+    <p class="lede" style="margin-top:6px;">18 of 20 seats. Two Saturdays. One former Deputy Minister running the mock case management himself.</p>
+    <a href="#reserve" class="cta">Reserve My Seat</a>
+    <p class="ps">P.S. There's no recording and no next batch on the calendar yet. If you're chambering this year, this is the session to not skip.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">Chambering Decoded &middot; Prepared under the guidance of Mr Hanipa Maidin</div>
+  <div class="wrap" style="margin-top:8px;">
+    <button type="button" onclick="promptAdmin(); return false;" style="background: transparent; border: none; color: rgba(250,247,240,0.35); font-size: 11px; text-decoration: underline; cursor: pointer;">Manage seats</button>
+  </div>
+</footer>
+
+<script>
+  (function() {
+    'use strict';
+
+    const MAX_SEATS = 20;
+    const EARLY_BIRD_CUTOFF = 10;
+    const WHATSAPP_NUMBER = "60123456789"; // TODO: Replace with your real WhatsApp business number
+    const ADMIN_PIN = "2026"; // TODO: Change this to a secure PIN
+
+    // TODO: Add your actual payment links here
+    const PAYMENT_LINKS = {
+      earlyBird: "", // Early bird payment link
+      regular: ""   // Regular payment link
+    };
+
+    const PRICE_TIERS = {
+      earlyBird: { label: "Early Bird", price: 97, cssClass: "" },
+      regular: { label: "Regular", price: 137, cssClass: "regular" }
+    };
+
+    // ----- Storage Functions (using localStorage) -----
+    function getSeats() {
+      try {
+        const stored = localStorage.getItem('cd-seats-reserved');
+        const count = stored ? parseInt(stored, 10) : 0;
+        return isNaN(count) ? 0 : Math.min(count, MAX_SEATS);
+      } catch (e) {
+        console.warn('Failed to get seats:', e);
+        return 0;
+      }
+    }
+
+    function setSeats(count) {
+      try {
+        const validCount = Math.max(0, Math.min(MAX_SEATS, count));
+        localStorage.setItem('cd-seats-reserved', String(validCount));
+        return true;
+      } catch (e) {
+        console.warn('Failed to set seats:', e);
+        return false;
+      }
+    }
+
+    function getCurrentTier(count) {
+      return count < EARLY_BIRD_CUTOFF ? 'earlyBird' : 'regular';
+    }
+
+    // ----- UI Rendering -----
+    function renderSeats(count) {
+      const remaining = Math.max(MAX_SEATS - count, 0);
+      const pct = Math.min((count / MAX_SEATS) * 100, 100);
+      const low = remaining <= 5;
+
+      // Hero chip
+      const chipText = document.getElementById('heroChipText');
+      const heroChip = document.getElementById('heroChip');
+      if (chipText) {
+        chipText.textContent = `${count} / ${MAX_SEATS} seats reserved`;
+      }
+      if (heroChip) {
+        heroChip.classList.toggle('low', low);
+      }
+
+      // Hero progress
+      const heroProgress = document.getElementById('heroProgress');
+      if (heroProgress) {
+        heroProgress.style.width = pct + '%';
+        heroProgress.classList.toggle('low', low);
+      }
+
+      // Offer section
+      const offerSeatText = document.getElementById('offerSeatText');
+      if (offerSeatText) {
+        offerSeatText.textContent = remaining > 0
+          ? `${remaining} seat${remaining === 1 ? '' : 's'} left`
+          : 'Cohort full';
+      }
+
+      const offerProgress = document.getElementById('offerProgress');
+      if (offerProgress) {
+        offerProgress.style.width = pct + '%';
+        offerProgress.classList.toggle('low', low);
+      }
+
+      // Pricing
+      const tierKey = getCurrentTier(count);
+      const tier = PRICE_TIERS[tierKey];
+
+      const priceText = document.getElementById('priceText');
+      if (priceText) {
+        priceText.textContent = `RM${tier.price}`;
+      }
+
+      const badge = document.getElementById('priceTierBadge');
+      if (badge) {
+        badge.textContent = tier.label;
+        badge.className = 'price-tier-badge ' + tier.cssClass;
+      }
+
+      const nextTierNote = document.getElementById('priceNextTier');
+      if (nextTierNote) {
+        if (tierKey === 'earlyBird') {
+          const left = EARLY_BIRD_CUTOFF - count;
+          nextTierNote.textContent = `Only ${left} early bird seat${left === 1 ? '' : 's'} left, price rises to RM${PRICE_TIERS.regular.price} after that.`;
+        } else {
+          nextTierNote.textContent = '';
+        }
+      }
+
+      // Buttons
+      const reserveBtn = document.getElementById('reserveBtn');
+      const heroBtn = document.getElementById('heroCta');
+
+      if (remaining <= 0) {
+        if (reserveBtn) {
+          reserveBtn.textContent = 'Cohort Full — Join Waitlist';
+          reserveBtn.onclick = function() { openWhatsapp('waitlist'); };
+        }
+        if (heroBtn) {
+          heroBtn.textContent = 'Cohort Full — Join Waitlist';
+          heroBtn.href = '#';
+          heroBtn.onclick = function(e) {
+            e.preventDefault();
+            openWhatsapp('waitlist');
+          };
+        }
+      } else {
+        if (reserveBtn) {
+          reserveBtn.textContent = 'Reserve My Seat';
+          reserveBtn.onclick = reserveSeat;
+        }
+        if (heroBtn) {
+          heroBtn.textContent = 'Reserve My Seat';
+          heroBtn.href = '#reserve';
+          heroBtn.onclick = null;
+        }
+      }
+    }
+
+    // ----- WhatsApp Helper -----
+    function openWhatsapp(mode, name) {
+      const msg = mode === 'waitlist'
+        ? "Hi, the Chambering Decoded cohort looks full. Can I join the waitlist?"
+        : `Hi, I'd like to reserve a seat for Chambering Decoded. My name is ${name || 'there'}.`;
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // ----- Reserve Seat -----
+    async function reserveSeat() {
+      const nameField = document.getElementById('nameField');
+      const phoneField = document.getElementById('phoneField');
+      const statusMsg = document.getElementById('statusMsg');
+
+      if (!nameField || !phoneField || !statusMsg) return;
+
+      const name = nameField.value.trim();
+      const phone = phoneField.value.trim();
+
+      if (!name || !phone) {
+        statusMsg.textContent = 'Please enter your name and WhatsApp number.';
+        statusMsg.className = 'status-msg err';
+        return;
+      }
+
+      try {
+        const current = getSeats();
+        if (current >= MAX_SEATS) {
+          renderSeats(current);
+          statusMsg.textContent = 'This cohort just filled up. Opening the waitlist chat instead.';
+          statusMsg.className = 'status-msg err';
+          openWhatsapp('waitlist');
+          return;
+        }
+
+        const next = current + 1;
+        const success = setSeats(next);
+        if (!success) {
+          throw new Error('Failed to save seat count');
+        }
+
+        renderSeats(next);
+
+        const tierKey = getCurrentTier(current);
+        const paymentLink = PAYMENT_LINKS[tierKey];
+
+        if (paymentLink) {
+          statusMsg.textContent = 'Seat reserved. Taking you to payment now.';
+          statusMsg.className = 'status-msg ok';
+          window.open(paymentLink, '_blank');
+          openWhatsapp('reserve', name);
+        } else {
+          statusMsg.textContent = 'Seat reserved. Opening WhatsApp to confirm payment details.';
+          statusMsg.className = 'status-msg ok';
+          openWhatsapp('reserve', name);
+        }
+
+        // Clear fields after successful reservation
+        nameField.value = '';
+        phoneField.value = '';
+      } catch (e) {
+        console.error('Reservation error:', e);
+        statusMsg.textContent = 'Something went wrong saving your seat. Please try again or message us directly.';
+        statusMsg.className = 'status-msg err';
+      }
+    }
+
+    // ----- Admin Functions -----
+    async function adjustSe
