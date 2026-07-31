@@ -146,6 +146,8 @@
     cursor: pointer;
     text-decoration: none;
     transition: background 0.15s ease, transform 0.15s ease;
+    text-transform: uppercase;
+
   }
   .cta:hover { background: var(--gold-light); transform: translateY(-1px); }
   .cta:focus-visible { outline: 2px solid var(--parchment); outline-offset: 3px; }
@@ -662,9 +664,9 @@
 
       
 
-      <div class="cta-row" style="justify-content:space-between;">
+      <div class="cta-row" style="justify-content:center;">
         <button class="cta" id="reserveBtn" onclick="reserveSeat()">Reserve My Seat</button>
-        <span class="mono" id="offerSeatText" style="font-size:12px; color:#7A7468;">Loading&hellip;</span>
+        <span class="mono" id="offerSeatText" style="font-size:12px; color:#ff0202; font-weight:bold;">Loading&hellip;</span>
       </div>
       <div class="progress-track" style="max-width:100%;"><div class="progress-fill" id="offerProgress" style="width:0%"></div></div>
       
@@ -776,8 +778,8 @@ function getCurrentTier(count) {
     document.getElementById('heroProgress').classList.toggle('low', low);
 
     document.getElementById('offerSeatText').textContent = remaining > 0
-      ? `${remaining} seat${remaining === 1 ? '' : 's'} left`
-      : 'Cohort full';
+  ? `${remaining} / ${MAX_SEATS} SEATS LEFT`
+  : 'Cohort full';
     document.getElementById('offerProgress').style.width = pct + '%';
     document.getElementById('offerProgress').classList.toggle('low', low);
 
