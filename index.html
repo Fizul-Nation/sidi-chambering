@@ -778,7 +778,7 @@ function getCurrentTier(count) {
     document.getElementById('heroProgress').classList.toggle('low', low);
 
     document.getElementById('offerSeatText').textContent = remaining > 0
-  ? `${remaining} / ${MAX_SEATS} SEATS LEFT`
+  ? `${remaining} / ${MAX_SEATS} SEATS LEFT!`
   : 'Cohort full';
     document.getElementById('offerProgress').style.width = pct + '%';
     document.getElementById('offerProgress').classList.toggle('low', low);
