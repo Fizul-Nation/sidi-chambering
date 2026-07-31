@@ -660,14 +660,15 @@
       <div class="price-note">Per seat &middot; both sessions</div>
       <div class="price-next-tier" id="priceNextTier"></div>
 
-      
+      <input type="text" class="field" id="nameField" placeholder="Full name">
+      <input type="tel" class="field" id="phoneField" placeholder="WhatsApp number (e.g. 012xxxxxxx)">
 
       <div class="cta-row" style="justify-content:space-between;">
         <button class="cta" id="reserveBtn" onclick="reserveSeat()">Reserve My Seat</button>
         <span class="mono" id="offerSeatText" style="font-size:12px; color:#7A7468;">Loading&hellip;</span>
       </div>
       <div class="progress-track" style="max-width:100%;"><div class="progress-fill" id="offerProgress" style="width:0%"></div></div>
-      
+      <div class="status-msg" id="statusMsg"></div>
     </div>
   </div>
 </section>
@@ -715,55 +716,37 @@
 </footer>
 
 <script>
-  // Your Google Apps Script URL (replace with yours)
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaGLmO59iRolbovz1pTOYY-JVw0iOpUwdB73-TsPezGsKvPGdo-ezmFjPYpb9s7ZFU/exec';
+  const MAX_SEATS = 20;
+  const WHATSAPP_NUMBER = "60123456789"; // TODO Sidi: replace with your real WhatsApp business number, digits only, country code first
 
-  // Your Google Form URL
-  const REGISTRATION_FORM_URL = "https://forms.gle/P7ZbBmYbWgtt2iUCA";
+  // Real pricing: only two tiers actually get charged.
+  // Seats 1-10: RM137 (early bird). Seats 11-20: RM167.
+  // RM200 is never charged, it's shown only as the anchor/justification price.
+  const TIER1_CUTOFF = 10; // TODO Sidi: adjust how many seats get the RM137 early bird price
+  const ANCHOR_PRICE = 200;
+  const PRICE_TIERS = {
+    tier1: { price: 137, label: "Early Bird &middot; 10 Slots" },
+    tier2: { price: 167, label: "First-Event Price" }
+  };
 
-  // Get seat count from Google Sheets
+  // TODO Sidi: replace with your actual Google Form link (the public "Send" link ending in
+  // /viewform or forms.gle, NOT the /edit link only you can see). I've left the /edit link's
+  // ID in here as a placeholder so nothing crashes, but it won't work for visitors until swapped.
+  const REGISTRATION_FORM_URL = "https://docs.google.com/forms/d/1TzDCXN88sUSZ30QDiOkj13laI3Ch2kzVUuwz74OdBa4/viewform";
+
+  function getCurrentTier(count) {
+    return count < TIER1_CUTOFF ? 'tier1' : 'tier2';
+  }
+
   async function getSeats() {
     try {
-      const response = await fetch(SCRIPT_URL);
-      const data = await response.json();
-      return data.count || 0;
+      const result = await window.storage.get('cd-seats-reserved', true);
+      const n = result ? parseInt(result.value, 10) : 0;
+      return isNaN(n) ? 0 : Math.min(n, MAX_SEATS);
     } catch (e) {
-      console.error('Error getting seats:', e);
       return 0;
     }
   }
-
-  // Update seat count in Google Sheets (admin only)
-  async function setSeats(count) {
-    try {
-      const url = `${SCRIPT_URL}?action=set&count=${count}`;
-      await fetch(url);
-    } catch (e) {
-      console.error('Error updating seats:', e);
-    }
-  }
-
-  // Redirect to Google Form
-  function reserveSeat() {
-    window.location.href = REGISTRATION_FORM_URL;
-  }
-
-  // --- PRICING CONFIGURATION ---
-const TIER1_CUTOFF = 10;
-const ANCHOR_PRICE = 200;
-const PRICE_TIERS = {
-  tier1: { price: 137, label: "Early Bird · 10 Slots" },
-  tier2: { price: 167, label: "First-Event Price" }
-};
-
-function getCurrentTier(count) {
-  return count < TIER1_CUTOFF ? 'tier1' : 'tier2';
-}
-// --- END PRICING CONFIGURATION ---
-
-  // --- Admin functions ---
-  const MAX_SEATS = 20;
-  const ADMIN_PIN = "2026";
 
   function renderSeats(count) {
     const remaining = Math.max(MAX_SEATS - count, 0);
@@ -781,53 +764,111 @@ function getCurrentTier(count) {
     document.getElementById('offerProgress').style.width = pct + '%';
     document.getElementById('offerProgress').classList.toggle('low', low);
 
-      // --- Add this price rendering code from the OLD version ---
-  const tierKey = getCurrentTier(count);
-  const priceStack = document.getElementById('priceStack');
-  const nextTierNote = document.getElementById('priceNextTier');
-  const saveVsAnchor = ANCHOR_PRICE - PRICE_TIERS[tierKey].price;
+    const tierKey = getCurrentTier(count);
+    const priceStack = document.getElementById('priceStack');
+    const nextTierNote = document.getElementById('priceNextTier');
+    const saveVsAnchor = ANCHOR_PRICE - PRICE_TIERS[tierKey].price;
 
-  if (tierKey === 'tier1') {
-    priceStack.innerHTML = `
-      <div class="hook-line">
-        <span class="hook-price anchor">RM${ANCHOR_PRICE}</span>
-        <span class="hook-note">The original value of hands-on training with a 25-year litigator and former Deputy Minister</span>
-      </div>
-      <div class="hook-line">
-        <span class="hook-price">RM${PRICE_TIERS.tier2.price}</span>
-        <span class="hook-note">our price for this first cohort, we'd rather prove the value than start high</span>
-      </div>
-      <div class="price-row">
-        <span class="price" id="priceText">RM${PRICE_TIERS.tier1.price}</span>
-        <span class="price-tier-badge">${PRICE_TIERS.tier1.label}</span>
-        <span class="save-badge">Save RM${saveVsAnchor}</span>
-      </div>
-      <div class="price-then">RM${PRICE_TIERS.tier2.price} once these 10 slots are gone</div>
-    `;
-    const left = TIER1_CUTOFF - count;
-    nextTierNote.textContent = `Only ${left} seat${left === 1 ? '' : 's'} left at RM${PRICE_TIERS.tier1.price}`;
-    nextTierNote.style.display = 'block';
-  } else {
-    priceStack.innerHTML = `
-      <div class="hook-line">
-        <span class="hook-price anchor">RM${ANCHOR_PRICE}</span>
-        <span class="hook-note">The original value of hands-on training with a 25-year litigator and former Deputy Minister</span>
-      </div>
-      <div class="price-row">
-        <span class="price" id="priceText">RM${PRICE_TIERS.tier2.price}</span>
-        <span class="price-tier-badge">${PRICE_TIERS.tier2.label}</span>
-        <span class="save-badge">Save RM${saveVsAnchor}</span>
-      </div>
-    `;
-    nextTierNote.style.display = 'none';
+    if (tierKey === 'tier1') {
+      priceStack.innerHTML = `
+        <div class="hook-line">
+          <span class="hook-price anchor">RM${ANCHOR_PRICE}</span>
+          <span class="hook-note">The original value of hands-on training with a 25-year litigator and former Deputy Minister</span>
+        </div>
+        <div class="hook-line">
+          <span class="hook-price">RM${PRICE_TIERS.tier2.price}</span>
+          <span class="hook-note">our price for this first cohort, we'd rather prove the value than start high</span>
+        </div>
+        <div class="price-row">
+          <span class="price" id="priceText">RM${PRICE_TIERS.tier1.price}</span>
+          <span class="price-tier-badge">${PRICE_TIERS.tier1.label}</span>
+          <span class="save-badge">Save RM${saveVsAnchor}</span>
+        </div>
+        <div class="price-then">RM${PRICE_TIERS.tier2.price} once these 10 slots are gone</div>
+      `;
+      const left = TIER1_CUTOFF - count;
+      nextTierNote.textContent = `Only ${left} seat${left === 1 ? '' : 's'} left at RM${PRICE_TIERS.tier1.price}`;
+      nextTierNote.style.display = 'block';
+    } else {
+      priceStack.innerHTML = `
+        <div class="hook-line">
+          <span class="hook-price anchor">RM${ANCHOR_PRICE}</span>
+          <span class="hook-note">The original value of hands-on training with a 25-year litigator and former Deputy Minister</span>
+        </div>
+        <div class="price-row">
+          <span class="price" id="priceText">RM${PRICE_TIERS.tier2.price}</span>
+          <span class="price-tier-badge">${PRICE_TIERS.tier2.label}</span>
+          <span class="save-badge">Save RM${saveVsAnchor}</span>
+        </div>
+      `;
+      nextTierNote.style.display = 'none';
+    }
+
+    const btn = document.getElementById('reserveBtn');
+    const heroBtn = document.getElementById('heroCta');
+    if (remaining <= 0) {
+      btn.textContent = 'Cohort Full — Join Waitlist';
+      btn.onclick = () => openWhatsapp('waitlist');
+      heroBtn.textContent = 'Cohort Full — Join Waitlist';
+    }
   }
-  // --- End of added code ---
+
+  function buildFormUrl(name, phone) {
+    // TODO Sidi: to have the form auto-fill their name and phone, open your Google Form,
+    // click the three-dot menu > "Get pre-filled link", type in sample answers, and copy
+    // the URL it gives you. Send me that URL and I'll wire the real field IDs in here.
+    // Until then, this just sends them to the blank form.
+    return REGISTRATION_FORM_URL;
+  }
+
+  function openWhatsapp(mode, name) {
+    const msg = mode === 'waitlist'
+      ? "Hi, the Chambering Decoded cohort looks full. Can I join the waitlist?"
+      : `Hi, I'd like to reserve a seat for Chambering Decoded. My name is ${name}.`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+
+  async function reserveSeat() {
+    const nameField = document.getElementById('nameField');
+    const phoneField = document.getElementById('phoneField');
+    const statusMsg = document.getElementById('statusMsg');
+    const name = nameField.value.trim();
+    const phone = phoneField.value.trim();
+
+    if (!name || !phone) {
+      statusMsg.textContent = 'Please enter your name and WhatsApp number.';
+      statusMsg.className = 'status-msg err';
+      return;
+    }
+
+    try {
+      const current = await getSeats();
+      if (current >= MAX_SEATS) {
+        renderSeats(current);
+        statusMsg.textContent = 'This cohort just filled up. Opening the waitlist chat instead.';
+        statusMsg.className = 'status-msg err';
+        openWhatsapp('waitlist');
+        return;
+      }
+      const next = current + 1;
+      await window.storage.set('cd-seats-reserved', String(next), true);
+      renderSeats(next);
+
+      statusMsg.textContent = 'Seat reserved. Taking you to the registration form now.';
+      statusMsg.className = 'status-msg ok';
+
+      openWhatsapp('reserve', name); // instant lead notification to Sidi, opens in a new tab
+      window.location.href = buildFormUrl(name, phone); // send them onward to complete registration
+    } catch (e) {
+      statusMsg.textContent = 'Something went wrong saving your seat. Please try again or message us directly.';
+      statusMsg.className = 'status-msg err';
+    }
   }
 
   async function adjustSeats(delta) {
     const current = await getSeats();
     const next = Math.max(0, Math.min(MAX_SEATS, current + delta));
-    await setSeats(next);
+    await window.storage.set('cd-seats-reserved', String(next), true);
     renderSeats(next);
     document.getElementById('adminCurrentCount').textContent = `${next} / ${MAX_SEATS}`;
   }
@@ -835,32 +876,25 @@ function getCurrentTier(count) {
   async function setSeatsExact() {
     const input = document.getElementById('adminSetInput');
     const val = Math.max(0, Math.min(MAX_SEATS, parseInt(input.value, 10) || 0));
-    await setSeats(val);
+    await window.storage.set('cd-seats-reserved', String(val), true);
     renderSeats(val);
     document.getElementById('adminCurrentCount').textContent = `${val} / ${MAX_SEATS}`;
-    input.value = '';
   }
 
-  function promptAdmin() {
+  const ADMIN_PIN = "2026"; // TODO Sidi: change this to any number you like, just tell me and I'll update it
+
+  async function promptAdmin() {
     const entered = window.prompt("Enter your admin PIN to manage seats:");
     if (entered === null) return;
     if (entered.trim() === ADMIN_PIN) {
       document.getElementById('adminPanel').classList.add('visible');
-      getSeats().then(count => {
-        document.getElementById('adminCurrentCount').textContent = `${count} / ${MAX_SEATS}`;
-      });
+      const count = await getSeats();
+      document.getElementById('adminCurrentCount').textContent = `${count} / ${MAX_SEATS}`;
     } else {
       alert("That PIN isn't right.");
     }
   }
 
-  // Make functions globally accessible
-  window.reserveSeat = reserveSeat;
-  window.adjustSeats = adjustSeats;
-  window.setSeatsExact = setSeatsExact;
-  window.promptAdmin = promptAdmin;
-
-  // Initialize
   (async function init() {
     const count = await getSeats();
     renderSeats(count);
