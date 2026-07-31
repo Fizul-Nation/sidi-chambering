@@ -716,13 +716,92 @@
 </footer>
 
 <script>
+  // Google Form URL - replace with your actual form URL
   const REGISTRATION_FORM_URL = "https://forms.gle/P7ZbBmYbWgtt2iUCA";
 
+  // Simple function to redirect to the form
   function reserveSeat() {
     window.location.href = REGISTRATION_FORM_URL;
   }
 
+  // Admin functions (optional - keep if you want seat management)
+  const MAX_SEATS = 20;
+  const ADMIN_PIN = "2026";
+
+  // Simple storage for seat count (using localStorage)
+  function getSeats() {
+    try {
+      const val = localStorage.getItem('cd-seats-reserved');
+      return val ? Math.min(parseInt(val, 10) || 0, MAX_SEATS) : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function setSeats(count) {
+    try {
+      localStorage.setItem('cd-seats-reserved', String(Math.min(count, MAX_SEATS)));
+    } catch (e) {}
+  }
+
+  function renderSeats(count) {
+    const remaining = Math.max(MAX_SEATS - count, 0);
+    const pct = Math.min((count / MAX_SEATS) * 100, 100);
+    const low = remaining <= 5;
+
+    document.getElementById('heroChipText').textContent = `${count} / ${MAX_SEATS} seats reserved`;
+    document.getElementById('heroChip').classList.toggle('low', low);
+    document.getElementById('heroProgress').style.width = pct + '%';
+    document.getElementById('heroProgress').classList.toggle('low', low);
+
+    document.getElementById('offerSeatText').textContent = remaining > 0
+      ? `${remaining} seat${remaining === 1 ? '' : 's'} left`
+      : 'Cohort full';
+    document.getElementById('offerProgress').style.width = pct + '%';
+    document.getElementById('offerProgress').classList.toggle('low', low);
+  }
+
+  // Admin functions
+  function adjustSeats(delta) {
+    const current = getSeats();
+    const next = Math.max(0, Math.min(MAX_SEATS, current + delta));
+    setSeats(next);
+    renderSeats(next);
+    document.getElementById('adminCurrentCount').textContent = `${next} / ${MAX_SEATS}`;
+  }
+
+  function setSeatsExact() {
+    const input = document.getElementById('adminSetInput');
+    const val = Math.max(0, Math.min(MAX_SEATS, parseInt(input.value, 10) || 0));
+    setSeats(val);
+    renderSeats(val);
+    document.getElementById('adminCurrentCount').textContent = `${val} / ${MAX_SEATS}`;
+    input.value = '';
+  }
+
+  function promptAdmin() {
+    const entered = window.prompt("Enter your admin PIN to manage seats:");
+    if (entered === null) return;
+    if (entered.trim() === ADMIN_PIN) {
+      document.getElementById('adminPanel').classList.add('visible');
+      const count = getSeats();
+      document.getElementById('adminCurrentCount').textContent = `${count} / ${MAX_SEATS}`;
+    } else {
+      alert("That PIN isn't right.");
+    }
+  }
+
+  // Make functions globally accessible
   window.reserveSeat = reserveSeat;
+  window.adjustSeats = adjustSeats;
+  window.setSeatsExact = setSeatsExact;
+  window.promptAdmin = promptAdmin;
+
+  // Initialize seat display
+  (function init() {
+    const count = getSeats();
+    renderSeats(count);
+  })();
 </script>
 
 <div id="adminPanel">
