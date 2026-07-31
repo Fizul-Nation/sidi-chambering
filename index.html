@@ -717,29 +717,42 @@
 </footer>
 
 <script>
-  // Your Google Apps Script URL (replace with yours)
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaGLmO59iRolbovz1pTOYY-JVw0iOpUwdB73-TsPezGsKvPGdo-ezmFjPYpb9s7ZFU/exec';
+  // Your Supabase credentials
+  const SUPABASE_URL = 'https://lechmwjjcvmxhcmmzdrp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlY2htd2pqY3ZteGhjbW16ZHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTEwMjAsImV4cCI6MjEwMTA4NzAyMH0.VE5DZp3XvwSRPyVzI1gVSKIY0cRRUq23hOqKpRPsN3E';
 
   // Your Google Form URL
   const REGISTRATION_FORM_URL = "https://forms.gle/P7ZbBmYbWgtt2iUCA";
 
-  // Get seat count from Google Sheets
+  // Get seat count from Supabase
   async function getSeats() {
     try {
-      const response = await fetch(SCRIPT_URL);
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/seats?id=eq.1&select=count`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
       const data = await response.json();
-      return data.count || 0;
+      return data[0]?.count || 0;
     } catch (e) {
       console.error('Error getting seats:', e);
       return 0;
     }
   }
 
-  // Update seat count in Google Sheets (admin only)
+  // Update seat count in Supabase (admin only)
   async function setSeats(count) {
     try {
-      const url = `${SCRIPT_URL}?action=set&count=${count}`;
-      await fetch(url);
+      await fetch(`${SUPABASE_URL}/rest/v1/seats?id=eq.1`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ count: count })
+      });
     } catch (e) {
       console.error('Error updating seats:', e);
     }
@@ -751,17 +764,17 @@
   }
 
   // --- PRICING CONFIGURATION ---
-const TIER1_CUTOFF = 10;
-const ANCHOR_PRICE = 200;
-const PRICE_TIERS = {
-  tier1: { price: 137, label: "Early Bird · 10 Slots" },
-  tier2: { price: 167, label: "First-Event Price" }
-};
+  const TIER1_CUTOFF = 10;
+  const ANCHOR_PRICE = 200;
+  const PRICE_TIERS = {
+    tier1: { price: 137, label: "Early Bird · 10 Slots" },
+    tier2: { price: 167, label: "First-Event Price" }
+  };
 
-function getCurrentTier(count) {
-  return count < TIER1_CUTOFF ? 'tier1' : 'tier2';
-}
-// --- END PRICING CONFIGURATION ---
+  function getCurrentTier(count) {
+    return count < TIER1_CUTOFF ? 'tier1' : 'tier2';
+  }
+  // --- END PRICING CONFIGURATION ---
 
   // --- Admin functions ---
   const MAX_SEATS = 20;
@@ -778,52 +791,51 @@ function getCurrentTier(count) {
     document.getElementById('heroProgress').classList.toggle('low', low);
 
     document.getElementById('offerSeatText').textContent = remaining > 0
-  ? `${remaining} / ${MAX_SEATS} SEATS LEFT!`
-  : 'Cohort full';
+      ? `${remaining} / ${MAX_SEATS} SEATS LEFT`
+      : 'Cohort full';
     document.getElementById('offerProgress').style.width = pct + '%';
     document.getElementById('offerProgress').classList.toggle('low', low);
 
-      // --- Add this price rendering code from the OLD version ---
-  const tierKey = getCurrentTier(count);
-  const priceStack = document.getElementById('priceStack');
-  const nextTierNote = document.getElementById('priceNextTier');
-  const saveVsAnchor = ANCHOR_PRICE - PRICE_TIERS[tierKey].price;
+    // Price rendering
+    const tierKey = getCurrentTier(count);
+    const priceStack = document.getElementById('priceStack');
+    const nextTierNote = document.getElementById('priceNextTier');
+    const saveVsAnchor = ANCHOR_PRICE - PRICE_TIERS[tierKey].price;
 
-  if (tierKey === 'tier1') {
-    priceStack.innerHTML = `
-      <div class="hook-line">
-        <span class="hook-price anchor">RM${ANCHOR_PRICE}</span>
-        <span class="hook-note">The original value of hands-on training with a 25-year litigator and former Deputy Minister</span>
-      </div>
-      <div class="hook-line">
-        <span class="hook-price">RM${PRICE_TIERS.tier2.price}</span>
-        <span class="hook-note">our price for this first cohort, we'd rather prove the value than start high</span>
-      </div>
-      <div class="price-row">
-        <span class="price" id="priceText">RM${PRICE_TIERS.tier1.price}</span>
-        <span class="price-tier-badge">${PRICE_TIERS.tier1.label}</span>
-        <span class="save-badge">Save RM${saveVsAnchor}</span>
-      </div>
-      <div class="price-then">RM${PRICE_TIERS.tier2.price} once these 10 slots are gone</div>
-    `;
-    const left = TIER1_CUTOFF - count;
-    nextTierNote.textContent = `Only ${left} seat${left === 1 ? '' : 's'} left at RM${PRICE_TIERS.tier1.price}`;
-    nextTierNote.style.display = 'block';
-  } else {
-    priceStack.innerHTML = `
-      <div class="hook-line">
-        <span class="hook-price anchor">RM${ANCHOR_PRICE}</span>
-        <span class="hook-note">The original value of hands-on training with a 25-year litigator and former Deputy Minister</span>
-      </div>
-      <div class="price-row">
-        <span class="price" id="priceText">RM${PRICE_TIERS.tier2.price}</span>
-        <span class="price-tier-badge">${PRICE_TIERS.tier2.label}</span>
-        <span class="save-badge">Save RM${saveVsAnchor}</span>
-      </div>
-    `;
-    nextTierNote.style.display = 'none';
-  }
-  // --- End of added code ---
+    if (tierKey === 'tier1') {
+      priceStack.innerHTML = `
+        <div class="hook-line">
+          <span class="hook-price anchor">RM${ANCHOR_PRICE}</span>
+          <span class="hook-note">The original value of hands-on training with a 25-year litigator and former Deputy Minister</span>
+        </div>
+        <div class="hook-line">
+          <span class="hook-price">RM${PRICE_TIERS.tier2.price}</span>
+          <span class="hook-note">our price for this first cohort, we'd rather prove the value than start high</span>
+        </div>
+        <div class="price-row">
+          <span class="price" id="priceText">RM${PRICE_TIERS.tier1.price}</span>
+          <span class="price-tier-badge">${PRICE_TIERS.tier1.label}</span>
+          <span class="save-badge">Save RM${saveVsAnchor}</span>
+        </div>
+        <div class="price-then">RM${PRICE_TIERS.tier2.price} once these 10 slots are gone</div>
+      `;
+      const left = TIER1_CUTOFF - count;
+      nextTierNote.textContent = `Only ${left} seat${left === 1 ? '' : 's'} left at RM${PRICE_TIERS.tier1.price}`;
+      nextTierNote.style.display = 'block';
+    } else {
+      priceStack.innerHTML = `
+        <div class="hook-line">
+          <span class="hook-price anchor">RM${ANCHOR_PRICE}</span>
+          <span class="hook-note">The original value of hands-on training with a 25-year litigator and former Deputy Minister</span>
+        </div>
+        <div class="price-row">
+          <span class="price" id="priceText">RM${PRICE_TIERS.tier2.price}</span>
+          <span class="price-tier-badge">${PRICE_TIERS.tier2.label}</span>
+          <span class="save-badge">Save RM${saveVsAnchor}</span>
+        </div>
+      `;
+      nextTierNote.style.display = 'none';
+    }
   }
 
   async function adjustSeats(delta) {
